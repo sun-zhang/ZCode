@@ -1,11 +1,25 @@
 export const ZCODE_RUNTIME_ENV_KEY = "ZCODE_RUNTIME_ENV";
 export const ZCODE_HTTP_PROXY_ENV_KEY = "ZCODE_HTTP_PROXY";
 export const ZCODE_NO_PROXY_ENV_KEY = "ZCODE_NO_PROXY";
+// 按需代理模式（specs/network/http-proxy-mode.md）：onDemand 下默认直连，仅 ZCODE_USE_PROXY
+// 清单命中的 host 走 ZCODE_HTTP_PROXY。非法值一律按 always 处理，保证兼容现状。
+export const ZCODE_PROXY_MODE_ENV_KEY = "ZCODE_PROXY_MODE";
+export const ZCODE_USE_PROXY_ENV_KEY = "ZCODE_USE_PROXY";
 /** Desktop Host 只向 desktop-attached remote server 传递一次的网络配置。 */
 export const ZCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY =
   "ZCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY";
 export const ZCODE_REMOTE_HTTP_PROXY_ENV_KEY = "ZCODE_REMOTE_HTTP_PROXY";
 export const ZCODE_REMOTE_NO_PROXY_ENV_KEY = "ZCODE_REMOTE_NO_PROXY";
+export const ZCODE_REMOTE_PROXY_MODE_ENV_KEY = "ZCODE_REMOTE_PROXY_MODE";
+export const ZCODE_REMOTE_USE_PROXY_ENV_KEY = "ZCODE_REMOTE_USE_PROXY";
+/** HTTP 代理模式：always=默认全走代理（现状），onDemand=默认直连、清单命中走代理。 */
+export type HttpProxyMode = "always" | "onDemand";
+
+export function normalizeHttpProxyMode(value: string | undefined): HttpProxyMode {
+  // fail-safe：未知值回退 always，避免脏 env 把存量用户全部切到直连。
+  // 注意比较用全小写 "ondemand"（"onDemand".toLowerCase() === "ondemand"）。
+  return value?.trim().toLowerCase() === "ondemand" ? "onDemand" : "always";
+}
 export const ZCODE_AGENT_CA_CERT_ENV_KEY = "ZCODE_AGENT_CA_CERT";
 export const ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY = "ZCODE_TOOL_ENV_PASSTHROUGH_JSON";
 /** Desktop Main 将服务端裁决的单功能灰度结果传给 Local/Remote Host。 */
@@ -57,6 +71,8 @@ const SANITIZED_RUNTIME_ENV_KEYS = [
   ZCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY,
   ZCODE_REMOTE_HTTP_PROXY_ENV_KEY,
   ZCODE_REMOTE_NO_PROXY_ENV_KEY,
+  ZCODE_REMOTE_PROXY_MODE_ENV_KEY,
+  ZCODE_REMOTE_USE_PROXY_ENV_KEY,
   // CUA broker socket 是只该给目标 zcode-cua MCP server 的连接材料（由 desktop/CLI 在
   // 解析该 server 时定向注入其 env）。绝不能随 agent 全局 env 泄漏给其它 MCP server / Bash / tool
   // 子进程 —— 否则同 agent 内的恶意 MCP 或被 prompt-injection 触发的命令能直接驱动
@@ -104,6 +120,8 @@ const NON_TOOL_PASSTHROUGH_RUNTIME_ENV_KEYS = [
   ZCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY,
   ZCODE_REMOTE_HTTP_PROXY_ENV_KEY,
   ZCODE_REMOTE_NO_PROXY_ENV_KEY,
+  ZCODE_REMOTE_PROXY_MODE_ENV_KEY,
+  ZCODE_REMOTE_USE_PROXY_ENV_KEY,
 ] as const;
 
 const SANITIZED_PACKAGE_MANAGER_ENV_PATTERN =

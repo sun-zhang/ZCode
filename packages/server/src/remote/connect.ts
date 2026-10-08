@@ -9,6 +9,8 @@ import {
   formatLogPrefix,
   ZCODE_REMOTE_HTTP_PROXY_ENV_KEY,
   ZCODE_REMOTE_NO_PROXY_ENV_KEY,
+  ZCODE_REMOTE_PROXY_MODE_ENV_KEY,
+  ZCODE_REMOTE_USE_PROXY_ENV_KEY,
   ZCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY,
 } from "@zcode/shared";
 import type { IRemoteBackend } from "./backend.js";
@@ -42,6 +44,9 @@ export interface ConnectOptions extends DeployOptions {
 export interface RemoteRuntimeNetworkOptions {
   httpProxy?: string;
   noProxy?: string;
+  /** 按需代理模式（specs/network/http-proxy-mode.md）与走代理清单，随 Host 设置透传。 */
+  proxyMode?: "always" | "onDemand";
+  useProxyHosts?: string;
   /** 只允许 Host 设置权威值覆盖远端自身的旧设置。 */
   authoritative?: boolean;
 }
@@ -385,6 +390,18 @@ function buildRemoteServerCommand(
     if (remoteRuntimeNetwork.noProxy !== undefined) {
       envParts.push(
         `${ZCODE_REMOTE_NO_PROXY_ENV_KEY}=${quotePosixShellArg(remoteRuntimeNetwork.noProxy)}`,
+      );
+    }
+    if (remoteRuntimeNetwork.proxyMode !== undefined) {
+      envParts.push(
+        `${ZCODE_REMOTE_PROXY_MODE_ENV_KEY}=${quotePosixShellArg(remoteRuntimeNetwork.proxyMode)}`,
+      );
+    }
+    if (remoteRuntimeNetwork.useProxyHosts !== undefined) {
+      envParts.push(
+        `${ZCODE_REMOTE_USE_PROXY_ENV_KEY}=${quotePosixShellArg(
+          remoteRuntimeNetwork.useProxyHosts,
+        )}`,
       );
     }
   }

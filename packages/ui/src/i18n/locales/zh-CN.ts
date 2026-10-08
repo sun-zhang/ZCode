@@ -2055,6 +2055,15 @@ const zhCN: Record<string, string> = {
   "settings.httpProxyPlaceholder": "留空则内置浏览器跟随系统代理，例如 http://127.0.0.1:7890",
   // 中文词条曾在批量文案调整中被误改为英文，导致中文设置页混入未翻译标签。
   // 文案原因：「代理例外」含义模糊，沿用 Windows 系统代理的标准表述「不使用代理的地址」。
+  "settings.httpProxyMode": "代理模式",
+  "settings.httpProxyModeDescription":
+    "全部走代理：所有请求经代理发送（可用下方排除清单绕过）。按需代理：默认直连，仅下方清单内的地址走代理。",
+  "settings.httpProxyMode.always": "全部走代理",
+  "settings.httpProxyMode.onDemand": "按需代理（默认直连）",
+  "settings.httpProxyUseProxyHosts": "使用代理的地址",
+  "settings.httpProxyUseProxyHostsDescription":
+    "仅在按需代理模式下生效。清单内地址走代理，其余直连；请求失败时会提示是否把对应地址加入清单。",
+  "settings.httpProxyUseProxyHostsPlaceholder": "例如 api.example.com,.internal.corp",
   "settings.httpProxyNoProxy": "不使用代理的地址",
   "settings.httpProxyNoProxyDescription":
     "匹配这些主机的请求将直连，不经过 HTTP 代理。多个规则用英文逗号分隔。修改后需重启应用生效。",
@@ -2064,6 +2073,12 @@ const zhCN: Record<string, string> = {
     "可选。填写 PEM 根证书路径后，会作为 NODE_EXTRA_CA_CERTS 注入模型、MCP 与命令工具，并用于渲染层证书校验。修改后需重启应用生效。",
   "settings.httpProxyCaCertPathPlaceholder": "例如 /Users/name/certs/root-ca.pem",
   "settings.httpProxySavedHint": "网络代理设置已保存，重启应用后生效",
+  "proxySuggestion.title": "网络请求不通",
+  "proxySuggestion.body": "直连无法访问 {host}，是否把它加入使用代理的清单？",
+  "proxySuggestion.add": "加入代理清单",
+  "proxySuggestion.dismiss": "忽略",
+  "proxySuggestion.addedHint": "已加入清单，重启应用后生效。",
+  "proxySuggestion.multipleOthers": "另有 {count} 个地址",
   "settings.desktopChromiumHardwareAcceleration": "Chrome 硬件加速",
   "settings.desktopChromiumHardwareAccelerationDescription":
     "关闭后可规避部分显卡或驱动导致的白屏、闪退、渲染异常。修改后需重启应用生效。",

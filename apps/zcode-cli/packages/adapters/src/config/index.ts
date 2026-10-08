@@ -108,6 +108,10 @@ class ConfigStore {
         this.set(ConfigKey.HttpProxy, config.network.httpProxy, scope);
       if (config.network.noProxy !== undefined)
         this.set(ConfigKey.NoProxy, config.network.noProxy, scope);
+      if (config.network.proxyMode !== undefined)
+        this.set(ConfigKey.ProxyMode, config.network.proxyMode, scope);
+      if (config.network.useProxy !== undefined)
+        this.set(ConfigKey.UseProxy, config.network.useProxy, scope);
       if (config.network.caCertFile !== undefined)
         this.set(ConfigKey.CaCertFile, config.network.caCertFile, scope);
       if (config.network.timeout !== undefined)
@@ -277,6 +281,8 @@ export class ConfigPortImpl implements ConfigPort {
       network: {
         httpProxy: this.store.get(ConfigKey.HttpProxy),
         noProxy: this.store.get(ConfigKey.NoProxy),
+        proxyMode: this.store.get(ConfigKey.ProxyMode),
+        useProxy: this.store.get(ConfigKey.UseProxy),
         caCertFile: this.store.get(ConfigKey.CaCertFile),
         timeout: this.store.get(ConfigKey.HttpTimeout) ?? DefaultConfig.network.timeout,
       },
@@ -389,6 +395,10 @@ function getDefaultValue(key: ConfigKey): unknown {
       return defaults.network.httpProxy;
     case ConfigKey.NoProxy:
       return defaults.network.noProxy;
+    case ConfigKey.ProxyMode:
+      return defaults.network.proxyMode;
+    case ConfigKey.UseProxy:
+      return defaults.network.useProxy;
     case ConfigKey.CaCertFile:
       return defaults.network.caCertFile;
     case ConfigKey.HttpTimeout:

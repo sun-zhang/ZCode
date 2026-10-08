@@ -2,14 +2,19 @@ import {
   ZCODE_AGENT_CA_CERT_ENV_KEY,
   ZCODE_HTTP_PROXY_ENV_KEY,
   ZCODE_NO_PROXY_ENV_KEY,
+  ZCODE_PROXY_MODE_ENV_KEY,
   ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY,
+  normalizeHttpProxyMode,
   readZCodeToolEnvPassthroughEnv,
+  type HttpProxyMode,
 } from "@zcode/shared";
 
 export interface NetworkEgressEnvPolicy {
   caCertFile?: string;
   httpProxy?: string;
   noProxy?: string;
+  proxyMode?: HttpProxyMode;
+  useProxy?: string;
 }
 
 interface NetworkEgressEnvOptions {
@@ -38,6 +43,7 @@ const CA_SOURCE_KEYS = [
 const CA_TARGET_KEYS = CA_SOURCE_KEYS;
 const EXPLICIT_CA_SOURCE_KEYS = [ZCODE_AGENT_CA_CERT_ENV_KEY] as const;
 const EXPLICIT_NO_PROXY_SOURCE_KEYS = [ZCODE_NO_PROXY_ENV_KEY] as const;
+const EXPLICIT_PROXY_MODE_SOURCE_KEYS = [ZCODE_PROXY_MODE_ENV_KEY] as const;
 
 export function applyNetworkEgressEnv(
   env: Record<string, string>,
@@ -74,6 +80,12 @@ function applyProxyEnv(
   network: NetworkEgressEnvPolicy,
   platform: NodeJS.Platform,
 ): void {
+  // 按需代理（specs/network/http-proxy-mode.md）：子进程默认直连。
+  // 标准三件套无法表达「仅清单内 host 走代理」，onDemand 下设置它们会让 curl 等外部命令
+  // 全量走代理，违背模式语义；应用层 fetch 由 createNetworkProxyFetch 按清单判定。
+  if (resolveEgressProxyMode(sourceEnv, network, platform) === "onDemand") {
+    return;
+  }
   const configuredProxy = normalizeProxyValue(network.httpProxy);
   if (configuredProxy) {
     for (const key of ALL_PROXY_KEYS) {
@@ -99,6 +111,10 @@ function applyNoProxyEnv(
   network: NetworkEgressEnvPolicy,
   platform: NodeJS.Platform,
 ): void {
+  // onDemand 下 noProxy 与 useProxy 清单互斥：不向子进程注入 NO_PROXY，避免与默认直连语义混淆。
+  if (resolveEgressProxyMode(sourceEnv, network, platform) === "onDemand") {
+    return;
+  }
   const noProxy =
     normalizeEnvValue(network.noProxy) ??
     getFirstEnvValue(sourceEnv, EXPLICIT_NO_PROXY_SOURCE_KEYS, platform);
@@ -136,6 +152,17 @@ function normalizeProxyValue(value: string | undefined): string | undefined {
     return trimmed;
   }
   return `http://${trimmed}`;
+}
+
+function resolveEgressProxyMode(
+  sourceEnv: Record<string, string | undefined>,
+  network: NetworkEgressEnvPolicy,
+  platform: NodeJS.Platform,
+): HttpProxyMode {
+  if (network.proxyMode) {
+    return network.proxyMode;
+  }
+  return normalizeHttpProxyMode(getFirstEnvValue(sourceEnv, EXPLICIT_PROXY_MODE_SOURCE_KEYS, platform));
 }
 
 function normalizeEnvValue(value: string | undefined): string | undefined {

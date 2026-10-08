@@ -3,7 +3,11 @@ import {
   ZCODE_AGENT_CA_CERT_ENV_KEY,
   ZCODE_HTTP_PROXY_ENV_KEY,
   ZCODE_NO_PROXY_ENV_KEY,
+  ZCODE_PROXY_MODE_ENV_KEY,
   ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY,
+  ZCODE_USE_PROXY_ENV_KEY,
+  normalizeHttpProxyMode,
+  type HttpProxyMode,
   readZCodeToolEnvPassthroughEnv,
 } from "@zcode/shared";
 
@@ -11,6 +15,8 @@ interface NetworkProxyOptions {
   env?: Record<string, string | undefined>;
   httpProxy?: string;
   noProxy?: string;
+  proxyMode?: HttpProxyMode;
+  useProxy?: string;
 }
 
 interface NetworkTlsOptions {
@@ -62,6 +68,16 @@ function resolveProxyForRequestInternal(
   const url = typeof requestUrl === "string" ? safeUrl(requestUrl) : requestUrl;
   if (!url || (url.protocol !== "http:" && url.protocol !== "https:")) {
     return { noProxyMatched: false };
+  }
+
+  // 按需代理（specs/network/http-proxy-mode.md）：默认直连，仅 useProxy 清单命中的 host 走代理。
+  // 该模式下 noProxy 清单与 captured user proxy fallback 都不参与判定——两套清单语义互斥，
+  // 且「用户 shell 捕获的代理」会让默认直连退回全代理，违背模式语义。
+  if (resolveProxyMode(options) === "onDemand") {
+    if (!shouldBypassProxy(url, readUseProxyValue(options))) {
+      return { noProxyMatched: false };
+    }
+    return resolveConfiguredProxy(options);
   }
 
   if (shouldBypassProxy(url, readExplicitNoProxyValue(options))) {
@@ -139,6 +155,44 @@ function readExplicitNoProxyValue(options: NetworkProxyOptions): string | undefi
     normalizePathLike(options.noProxy) ??
     normalizePathLike(options.env?.[ZCODE_NO_PROXY_ENV_KEY])
   );
+}
+
+/** 代理模式解析：显式 options 优先，其次 ZCODE_PROXY_MODE env；非法值回退 always（兼容现状）。 */
+export function resolveProxyMode(options: NetworkProxyOptions): HttpProxyMode {
+  if (options.proxyMode) {
+    return options.proxyMode;
+  }
+  return normalizeHttpProxyMode(options.env?.[ZCODE_PROXY_MODE_ENV_KEY]);
+}
+
+function readUseProxyValue(options: NetworkProxyOptions): string | undefined {
+  return (
+    normalizePathLike(options.useProxy) ??
+    normalizePathLike(options.env?.[ZCODE_USE_PROXY_ENV_KEY])
+  );
+}
+
+/** onDemand 清单命中后的代理解析：只接受显式 httpProxy / ZCODE_HTTP_PROXY，不回落 captured user proxy。 */
+function resolveConfiguredProxy(options: NetworkProxyOptions): NetworkProxyResolution {
+  const explicitProxy = normalizeProxyUrl(options.httpProxy);
+  if (explicitProxy) {
+    return {
+      noProxyMatched: false,
+      proxySource: "network.httpProxy",
+      proxyUrl: explicitProxy,
+    };
+  }
+
+  const envProxy = normalizeProxyUrl(options.env?.[ZCODE_HTTP_PROXY_ENV_KEY]);
+  if (envProxy) {
+    return {
+      noProxyMatched: false,
+      proxySource: `env:${ZCODE_HTTP_PROXY_ENV_KEY}`,
+      proxyUrl: envProxy,
+    };
+  }
+
+  return { noProxyMatched: false };
 }
 
 function readCapturedUserProxy(

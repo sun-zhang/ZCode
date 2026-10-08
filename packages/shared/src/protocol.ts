@@ -5,6 +5,7 @@ import type { ProviderFamilyConnectionSelectionSettings } from "./provider-famil
 import type { ZCodeProvider } from "./zcode-task-types-core.js";
 import type { WorkspacePurpose } from "./workspacePurpose.js";
 import type { EmbeddedBrowserViewportPreference } from "./browser-use/command-metadata.js";
+import type { HttpProxyMode } from "./runtimeEnv.js";
 
 // ── Domain types ──
 
@@ -257,6 +258,13 @@ export interface AppSettings {
   httpProxy?: string;
   /** 代理绕过规则，例如 localhost,127.0.0.1,.example.com；只在 httpProxy 存在时影响 renderer，agent/tool 仍按显式环境使用。 */
   httpProxyNoProxy?: string;
+  /**
+   * HTTP 代理模式（specs/network/http-proxy-mode.md）：
+   * always（默认）= 全部走代理、noProxy 清单排除；onDemand = 默认直连、仅下方清单命中走代理。
+   */
+  httpProxyMode?: HttpProxyMode;
+  /** onDemand 模式下走代理的地址清单，例如 api.example.com,.internal.corp；语法同 noProxy。 */
+  httpProxyUseProxyHosts?: string;
   /** 自定义 PEM 根证书路径；下次启动 app/agent 时用于 renderer 校验与 agent NODE_EXTRA_CA_CERTS。 */
   httpProxyCaCertPath?: string;
   /**

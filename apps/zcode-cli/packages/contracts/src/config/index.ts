@@ -26,6 +26,8 @@ export const ConfigKey = {
   // Network
   HttpProxy: "network.httpProxy",
   NoProxy: "network.noProxy",
+  ProxyMode: "network.proxyMode",
+  UseProxy: "network.useProxy",
   CaCertFile: "network.caCertFile",
   HttpTimeout: "network.timeout",
 
@@ -99,8 +101,11 @@ export type ConfigValue<K extends ConfigKey> = K extends "modelStream.idleTimeou
               | "network.httpProxy"
               | "network.noProxy"
               | "network.caCertFile"
+              | "network.useProxy"
           ? string | undefined
-          : K extends "network.timeout"
+          : K extends "network.proxyMode"
+            ? "always" | "onDemand" | undefined
+            : K extends "network.timeout"
             ? number
             : K extends
                   | "features.compact"
@@ -215,6 +220,10 @@ export interface RuntimeConfig {
   network: {
     httpProxy?: string;
     noProxy?: string;
+    /** 按需代理模式（specs/network/http-proxy-mode.md）：onDemand 下默认直连，仅 useProxy 清单命中走代理。 */
+    proxyMode?: "always" | "onDemand";
+    /** onDemand 模式走代理清单，语法同 noProxy。 */
+    useProxy?: string;
     caCertFile?: string;
     timeout: number;
   };

@@ -107,6 +107,8 @@ export function createRemoteWorkspaceServiceCollection(params: {
     return {
       httpProxy: settings.httpProxy,
       noProxy: settings.httpProxyNoProxy,
+      proxyMode: settings.httpProxyMode,
+      useProxyHosts: settings.httpProxyUseProxyHosts,
       caCertPath: settings.httpProxyCaCertPath,
     };
   });

@@ -234,6 +234,8 @@ export async function runZCodeProtocolAgent(
             network: {
               httpProxy: configResult.config.network.httpProxy,
               noProxy: configResult.config.network.noProxy,
+              proxyMode: configResult.config.network.proxyMode,
+              useProxy: configResult.config.network.useProxy,
               caCertFile: configResult.config.network.caCertFile,
             },
             officialMcpAuth,

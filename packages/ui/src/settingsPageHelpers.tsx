@@ -1,5 +1,6 @@
 /* oxlint-disable eslint(max-lines) -- settings helper 聚合多个设置分组；终端、网络与自动归档多侧能力暂时超过行数限制。 */
 import type {
+  HttpProxyMode,
   IntegratedTerminalShellOption,
   IntegratedTerminalShellSelection,
   LocalePreference,
@@ -64,6 +65,8 @@ export function GeneralSectionContent({
   nativeSearchEnhancementsEnabled,
   httpProxy = "",
   httpProxyNoProxy = "",
+  httpProxyMode = "always",
+  httpProxyUseProxyHosts = "",
   httpProxyCaCertPath = "",
   defaultHomeDir,
   isDesktop,
@@ -89,7 +92,9 @@ export function GeneralSectionContent({
   onIntegratedTerminalShellChange = async () => {},
   onNativeSearchEnhancementsEnabledChange,
   onHttpProxyChange = async () => {},
+  onHttpProxyModeChange = async () => {},
   onHttpProxyNoProxyChange = async () => {},
+  onHttpProxyUseProxyHostsChange = async () => {},
   onHttpProxyCaCertPathChange = async () => {},
   onTaskAutoArchiveEnabledChange,
   onTaskAutoArchiveOlderThanDaysChange,
@@ -126,6 +131,8 @@ export function GeneralSectionContent({
   nativeSearchEnhancementsEnabled: boolean;
   httpProxy?: string;
   httpProxyNoProxy?: string;
+  httpProxyMode?: HttpProxyMode;
+  httpProxyUseProxyHosts?: string;
   httpProxyCaCertPath?: string;
   defaultHomeDir: string;
   isDesktop?: boolean;
@@ -152,7 +159,9 @@ export function GeneralSectionContent({
   onIntegratedTerminalShellChange?: (selection: IntegratedTerminalShellSelection) => Promise<void>;
   onNativeSearchEnhancementsEnabledChange: (enabled: boolean) => Promise<void>;
   onHttpProxyChange?: (httpProxy: string) => Promise<void>;
+  onHttpProxyModeChange?: (mode: HttpProxyMode) => Promise<void>;
   onHttpProxyNoProxyChange?: (noProxy: string) => Promise<void>;
+  onHttpProxyUseProxyHostsChange?: (hosts: string) => Promise<void>;
   onHttpProxyCaCertPathChange?: (caCertPath: string) => Promise<void>;
   onTaskAutoArchiveEnabledChange: (enabled: boolean) => Promise<void>;
   onTaskAutoArchiveOlderThanDaysChange: (days: number) => Promise<void>;
@@ -262,6 +271,25 @@ export function GeneralSectionContent({
   const handleHttpProxyNoProxySave = useCallback(async () => {
     await onHttpProxyNoProxyChange(normalizedHttpProxyNoProxy);
   }, [normalizedHttpProxyNoProxy, onHttpProxyNoProxyChange]);
+
+  const [localHttpProxyUseProxyHosts, setLocalHttpProxyUseProxyHosts] =
+    useState(httpProxyUseProxyHosts);
+
+  useEffect(() => {
+    setLocalHttpProxyUseProxyHosts(httpProxyUseProxyHosts);
+  }, [httpProxyUseProxyHosts]);
+
+  const normalizedHttpProxyUseProxyHosts = localHttpProxyUseProxyHosts
+    .split(",")
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .join(",");
+  const isHttpProxyUseProxyHostsDirty =
+    normalizedHttpProxyUseProxyHosts !== httpProxyUseProxyHosts;
+
+  const handleHttpProxyUseProxyHostsSave = useCallback(async () => {
+    await onHttpProxyUseProxyHostsChange(normalizedHttpProxyUseProxyHosts);
+  }, [normalizedHttpProxyUseProxyHosts, onHttpProxyUseProxyHostsChange]);
 
   const [localHttpProxyCaCertPath, setLocalHttpProxyCaCertPath] = useState(httpProxyCaCertPath);
 
@@ -480,41 +508,108 @@ export function GeneralSectionContent({
             />
           }
         />
-        {/* No Proxy 与 HTTP 代理共同决定同一出口策略，必须贴在代理地址下面。*/}
+        {/* 模式选择放在代理地址之后：它决定下面展示哪条清单（always→noProxy，onDemand→走代理清单）。*/}
         <SettingsRow
-          label={intl.formatMessage({ id: "settings.httpProxyNoProxy" })}
-          description={intl.formatMessage({
-            id: "settings.httpProxyNoProxyDescription",
-          })}
+          label={intl.formatMessage({ id: "settings.httpProxyMode" })}
+          description={intl.formatMessage({ id: "settings.httpProxyModeDescription" })}
           control={
-            <Button
-              type="button"
-              size="lg"
-              disabled={!isHttpProxyNoProxyDirty}
-              onClick={() => void handleHttpProxyNoProxySave()}
+            <Select
+              value={httpProxyMode}
+              onValueChange={(value) => {
+                void onHttpProxyModeChange(value === "onDemand" ? "onDemand" : "always");
+              }}
             >
-              {intl.formatMessage({ id: "settings.dataBaseDirSave" })}
-            </Button>
-          }
-          detail={
-            <Input
-              size="lg"
-              value={localHttpProxyNoProxy}
-              placeholder={intl.formatMessage({
-                id: "settings.httpProxyNoProxyPlaceholder",
-              })}
-              onChange={(event) => {
-                setLocalHttpProxyNoProxy(event.currentTarget.value);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && isHttpProxyNoProxyDirty) {
-                  void handleHttpProxyNoProxySave();
-                }
-              }}
-              className="max-w-[520px] font-mono"
-            />
+              <SelectTrigger
+                size="lg"
+                className="w-[260px] min-w-0 justify-between"
+                aria-label={intl.formatMessage({ id: "settings.httpProxyMode" })}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="always">
+                  {intl.formatMessage({ id: "settings.httpProxyMode.always" })}
+                </SelectItem>
+                <SelectItem value="onDemand">
+                  {intl.formatMessage({ id: "settings.httpProxyMode.onDemand" })}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           }
         />
+        {/* No Proxy 与 HTTP 代理共同决定同一出口策略，必须贴在代理地址下面。*/}
+        {httpProxyMode !== "onDemand" ? (
+          <SettingsRow
+            label={intl.formatMessage({ id: "settings.httpProxyNoProxy" })}
+            description={intl.formatMessage({
+              id: "settings.httpProxyNoProxyDescription",
+            })}
+            control={
+              <Button
+                type="button"
+                size="lg"
+                disabled={!isHttpProxyNoProxyDirty}
+                onClick={() => void handleHttpProxyNoProxySave()}
+              >
+                {intl.formatMessage({ id: "settings.dataBaseDirSave" })}
+              </Button>
+            }
+            detail={
+              <Input
+                size="lg"
+                value={localHttpProxyNoProxy}
+                placeholder={intl.formatMessage({
+                  id: "settings.httpProxyNoProxyPlaceholder",
+                })}
+                onChange={(event) => {
+                  setLocalHttpProxyNoProxy(event.currentTarget.value);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && isHttpProxyNoProxyDirty) {
+                    void handleHttpProxyNoProxySave();
+                  }
+                }}
+                className="max-w-[520px] font-mono"
+              />
+            }
+          />
+        ) : (
+          /* 按需代理（specs/network/http-proxy-mode.md）：默认直连，仅该清单命中的地址走代理。*/
+          <SettingsRow
+            label={intl.formatMessage({ id: "settings.httpProxyUseProxyHosts" })}
+            description={intl.formatMessage({
+              id: "settings.httpProxyUseProxyHostsDescription",
+            })}
+            control={
+              <Button
+                type="button"
+                size="lg"
+                disabled={!isHttpProxyUseProxyHostsDirty}
+                onClick={() => void handleHttpProxyUseProxyHostsSave()}
+              >
+                {intl.formatMessage({ id: "settings.dataBaseDirSave" })}
+              </Button>
+            }
+            detail={
+              <Input
+                size="lg"
+                value={localHttpProxyUseProxyHosts}
+                placeholder={intl.formatMessage({
+                  id: "settings.httpProxyUseProxyHostsPlaceholder",
+                })}
+                onChange={(event) => {
+                  setLocalHttpProxyUseProxyHosts(event.currentTarget.value);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && isHttpProxyUseProxyHostsDirty) {
+                    void handleHttpProxyUseProxyHostsSave();
+                  }
+                }}
+                className="max-w-[520px] font-mono"
+              />
+            }
+          />
+        )}
         {/* 自定义 CA 属于 HTTP 代理的同一网络出口策略，必须跟代理输入放在同一卡片里。*/}
         <SettingsRow
           label={intl.formatMessage({ id: "settings.httpProxyCaCertPath" })}

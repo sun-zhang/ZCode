@@ -428,6 +428,8 @@ const appSettingsObjectSchema = z.object({
   integratedTerminalShell: integratedTerminalShellSelectionSchema.optional(),
   httpProxy: nonEmptyStringSchema.optional(),
   httpProxyNoProxy: nonEmptyStringSchema.optional(),
+  httpProxyMode: z.enum(["always", "onDemand"]).optional(),
+  httpProxyUseProxyHosts: nonEmptyStringSchema.optional(),
   httpProxyCaCertPath: nonEmptyStringSchema.optional(),
   embeddedBrowserAllowInsecureCertificates: z.boolean().default(false),
   embeddedBrowserViewportPreference: embeddedBrowserViewportPreferenceSchema.default(
@@ -500,6 +502,8 @@ export const appSettingsPatchSchema = z.object({
   integratedTerminalShell: integratedTerminalShellSelectionSchema.optional(),
   httpProxy: nonEmptyStringSchema.optional(),
   httpProxyNoProxy: nonEmptyStringSchema.optional(),
+  httpProxyMode: z.enum(["always", "onDemand"]).optional(),
+  httpProxyUseProxyHosts: nonEmptyStringSchema.optional(),
   httpProxyCaCertPath: nonEmptyStringSchema.optional(),
   embeddedBrowserAllowInsecureCertificates: z.boolean().optional(),
   embeddedBrowserViewportPreference: embeddedBrowserViewportPreferenceSchema.optional(),

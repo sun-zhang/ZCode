@@ -2,6 +2,7 @@ import http from "node:http";
 import https from "node:https";
 import { Readable } from "node:stream";
 import { ProxyAgent } from "proxy-agent";
+import type { HttpProxyMode } from "@zcode/shared";
 import {
   loadTlsCaCertificates,
   resolveProxyUrlForRequest,
@@ -16,6 +17,8 @@ interface NetworkProxyFetchOptions {
   fetch?: NetworkFetch;
   httpProxy?: string;
   noProxy?: string;
+  proxyMode?: HttpProxyMode;
+  useProxy?: string;
 }
 
 interface NormalizedFetchRequest {
@@ -64,7 +67,15 @@ export function createNetworkProxyFetch(options: NetworkProxyFetchOptions): Netw
 }
 
 function hasNetworkFetchPolicy(options: NetworkProxyFetchOptions): boolean {
-  return Boolean(options.caCertFile || options.env || options.httpProxy || options.noProxy);
+  // onDemand 模式即使没有显式代理值也要保留 wrapper：判定需要读取 env 中的模式与清单。
+  return Boolean(
+    options.caCertFile ||
+      options.env ||
+      options.httpProxy ||
+      options.noProxy ||
+      options.proxyMode ||
+      options.useProxy,
+  );
 }
 
 function readFetchInputUrl(input: Parameters<NetworkFetch>[0]): URL | undefined {

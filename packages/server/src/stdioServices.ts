@@ -3,7 +3,9 @@ import {
   parseServiceAuthorityMode,
   ZCODE_REMOTE_HTTP_PROXY_ENV_KEY,
   ZCODE_REMOTE_NO_PROXY_ENV_KEY,
+  ZCODE_REMOTE_PROXY_MODE_ENV_KEY,
   ZCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY,
+  ZCODE_REMOTE_USE_PROXY_ENV_KEY,
 } from "@zcode/shared";
 
 interface CreateStdioServicesOptions {
@@ -15,6 +17,8 @@ interface CreateStdioServicesOptions {
 interface RemoteAgentNetworkOptions {
   httpProxy?: string;
   noProxy?: string;
+  proxyMode?: "always" | "onDemand";
+  useProxyHosts?: string;
 }
 
 function resolveRemoteAgentNetworkFromEnv(
@@ -26,6 +30,11 @@ function resolveRemoteAgentNetworkFromEnv(
   return {
     httpProxy: env[ZCODE_REMOTE_HTTP_PROXY_ENV_KEY]?.trim() || undefined,
     noProxy: env[ZCODE_REMOTE_NO_PROXY_ENV_KEY]?.trim() || undefined,
+    proxyMode:
+      env[ZCODE_REMOTE_PROXY_MODE_ENV_KEY]?.trim().toLowerCase() === "ondemand"
+        ? "onDemand"
+        : "always",
+    useProxyHosts: env[ZCODE_REMOTE_USE_PROXY_ENV_KEY]?.trim() || undefined,
   };
 }
 

@@ -10,6 +10,7 @@ import {
 } from "react";
 import type {
   AppSettings,
+  HttpProxyMode,
   IntegratedTerminalShellOption,
   IntegratedTerminalShellSelection,
   Locale,
@@ -693,6 +694,8 @@ export function SettingsPage({
   >([]);
   const [httpProxy, setHttpProxy] = useState("");
   const [httpProxyNoProxy, setHttpProxyNoProxy] = useState("");
+  const [httpProxyMode, setHttpProxyMode] = useState<HttpProxyMode>("always");
+  const [httpProxyUseProxyHosts, setHttpProxyUseProxyHosts] = useState("");
   const [httpProxyCaCertPath, setHttpProxyCaCertPath] = useState("");
   const [embeddedBrowserAllowInsecureCertificates, setEmbeddedBrowserAllowInsecureCertificates] =
     useState(false);
@@ -777,6 +780,8 @@ export function SettingsPage({
         setIntegratedTerminalShell(settings.integratedTerminalShell ?? { mode: "auto" });
         setHttpProxy(settings.httpProxy ?? "");
         setHttpProxyNoProxy(settings.httpProxyNoProxy ?? "");
+        setHttpProxyMode(settings.httpProxyMode ?? "always");
+        setHttpProxyUseProxyHosts(settings.httpProxyUseProxyHosts ?? "");
         setHttpProxyCaCertPath(settings.httpProxyCaCertPath ?? "");
         setEmbeddedBrowserAllowInsecureCertificates(
           settings.embeddedBrowserAllowInsecureCertificates ?? false,
@@ -965,6 +970,41 @@ export function SettingsPage({
         },
       });
       setHttpProxy(normalizedProxy);
+      toast(intl.formatMessage({ id: "settings.httpProxySavedHint" }));
+    },
+    [services.settingService, intl],
+  );
+  const handleHttpProxyModeChange = useCallback(
+    async (mode: HttpProxyMode) => {
+      await runSettingsActionAsync({
+        featureId: "settings.network",
+        action: "save_proxy_mode",
+        trigger: "select",
+        operation: () => services.settingService.update({ httpProxyMode: mode }),
+        completed: {
+          resultSource: "setting_service",
+          requiresRestart: true,
+        },
+      });
+      setHttpProxyMode(mode);
+      toast(intl.formatMessage({ id: "settings.httpProxySavedHint" }));
+    },
+    [services.settingService, intl],
+  );
+  const handleHttpProxyUseProxyHostsChange = useCallback(
+    async (hosts: string) => {
+      await runSettingsActionAsync({
+        featureId: "settings.network",
+        action: "save_use_proxy_hosts",
+        trigger: "button",
+        operation: () =>
+          services.settingService.update({
+            // 清空清单必须传空串，否则旧清单会继续影响下次启动（与 noProxy 同语义）。
+            httpProxyUseProxyHosts: hosts,
+          }),
+        completed: { resultSource: "setting_service", configured: hosts.length > 0 },
+      });
+      setHttpProxyUseProxyHosts(hosts);
       toast(intl.formatMessage({ id: "settings.httpProxySavedHint" }));
     },
     [services.settingService, intl],
@@ -1675,7 +1715,9 @@ export function SettingsPage({
                             integratedTerminalShellOptions={integratedTerminalShellOptions}
                             nativeSearchEnhancementsEnabled={nativeSearchEnhancementsEnabled}
                             httpProxy={httpProxy}
+                            httpProxyMode={httpProxyMode}
                             httpProxyNoProxy={httpProxyNoProxy}
+                            httpProxyUseProxyHosts={httpProxyUseProxyHosts}
                             httpProxyCaCertPath={httpProxyCaCertPath}
                             defaultHomeDir={defaultHomeDir}
                             showIntegratedTerminalShell={hostPlatform === "win32"}
@@ -1736,7 +1778,9 @@ export function SettingsPage({
                               handleModelIoFullRetentionEnabledChange
                             }
                             onHttpProxyChange={handleHttpProxyChange}
+                            onHttpProxyModeChange={handleHttpProxyModeChange}
                             onHttpProxyNoProxyChange={handleHttpProxyNoProxyChange}
+                            onHttpProxyUseProxyHostsChange={handleHttpProxyUseProxyHostsChange}
                             onHttpProxyCaCertPathChange={handleHttpProxyCaCertPathChange}
                             onTaskAutoArchiveEnabledChange={handleTaskAutoArchiveEnabledChange}
                             onTaskAutoArchiveOlderThanDaysChange={

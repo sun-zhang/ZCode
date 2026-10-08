@@ -6,6 +6,7 @@ import http from "node:http";
 import https from "node:https";
 import { Readable } from "node:stream";
 import { ProxyAgent } from "proxy-agent";
+import type { HttpProxyMode } from "@zcode/shared";
 import {
   createHttpClientError,
   isHttpClientPortError,
@@ -38,6 +39,8 @@ export interface NodeHttpClientAdapterOptions {
   maxResponseBytes?: number;
   proxyUrl?: string;
   noProxy?: string;
+  proxyMode?: HttpProxyMode;
+  useProxy?: string;
   caCertFile?: string;
   dnsLookup?: DnsLookup;
   capturedUserProxyEnvFallback?: boolean;
@@ -65,6 +68,8 @@ export class NodeHttpClientAdapter implements HttpClientPort {
       env: this.options.env,
       httpProxy: this.options.proxyUrl,
       noProxy: this.options.noProxy,
+      proxyMode: this.options.proxyMode,
+      useProxy: this.options.useProxy,
     });
     const publicDnsLookup =
       request.egressPolicy === "public"

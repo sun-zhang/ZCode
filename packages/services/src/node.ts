@@ -1322,6 +1322,8 @@ export function createLocalServices(options: {
   remoteAgentNetwork?: {
     httpProxy?: string;
     noProxy?: string;
+    proxyMode?: "always" | "onDemand";
+    useProxyHosts?: string;
   };
   /** 所属 Environment 的 ZCode Built-in Provider Config 物理路径。 */
   zcodeBuiltinProviderConfigFilePath: string;
@@ -1421,6 +1423,8 @@ export function createLocalServices(options: {
       return {
         httpProxy: settings.httpProxy,
         noProxy: settings.httpProxyNoProxy,
+        proxyMode: settings.httpProxyMode,
+        useProxyHosts: settings.httpProxyUseProxyHosts,
         caCertPath: settings.httpProxyCaCertPath,
       };
     });
@@ -2151,6 +2155,8 @@ export function createLocalServices(options: {
           : {
               httpProxy: settings.httpProxy,
               noProxy: settings.httpProxyNoProxy,
+              proxyMode: settings.httpProxyMode,
+              useProxyHosts: settings.httpProxyUseProxyHosts,
             };
       // 与 helper 创建同一个门控（isCuaEnabledForContext：dev/internal 特性 OR 官方插件 enablement），
       // 避免 dev mode 下 helper 建了但 resolveSpawnEnv 漏注入 broker env 的割裂。
@@ -2222,6 +2228,8 @@ export function createLocalServices(options: {
         ...buildAgentRuntimeEnv({
           httpProxy: agentNetwork.httpProxy,
           noProxy: agentNetwork.noProxy,
+          proxyMode: agentNetwork.proxyMode,
+          useProxyHosts: agentNetwork.useProxyHosts,
           caCertPath: settings.httpProxyCaCertPath,
         }),
         // 把 host 解析出的权威 origin（含 settings 覆盖）下发给 agent，否则 agent 侧只按

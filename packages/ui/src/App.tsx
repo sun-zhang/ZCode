@@ -64,6 +64,7 @@ import { resolveAppWorkspaceRpcTarget } from "@/app-shell/workspaceRpcTarget.js"
 import { useWorkspaceServicesResolution } from "@/hooks/useWorkspaceServices.js";
 import { useWorkspaceTerminalTaskNotifications } from "@/hooks/useTaskNotifications.js";
 import { useOffPeakTaskNotifications } from "@/hooks/useOffPeakTaskNotifications.js";
+import { useProxyFailureSuggestionToast } from "@/root/useProxyFailureSuggestionToast.js";
 import type { AppProps, WorkspaceMainView } from "@/app-shell/types.js";
 import type {
   ChatSearchResultHighlightRequest,
@@ -288,6 +289,8 @@ export function App({
     enabled: Boolean(notificationEnabled && isDesktop),
     formatMessage: intl.formatMessage,
   });
+  // 按需代理失败确认：仅 onDemand 模式弹「加入走代理清单」提示（root 一次性挂载）。
+  useProxyFailureSuggestionToast(services);
   const lastHandledDraftSidePaneCloseRef = useRef({
     workspaceKey,
     draftFocusVersion,

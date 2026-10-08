@@ -196,6 +196,8 @@ function createRuntimeDeps(
         network: {
           httpProxy: deps.configResult.config.network.httpProxy,
           noProxy: deps.configResult.config.network.noProxy,
+          proxyMode: deps.configResult.config.network.proxyMode,
+          useProxy: deps.configResult.config.network.useProxy,
           caCertFile: deps.configResult.config.network.caCertFile,
         },
         outputRootDir: join(deps.storageRoot, "cli", "exec"),
@@ -209,6 +211,8 @@ function createRuntimeDeps(
         env: deps.appOptions.env ?? process.env,
         proxyUrl: deps.configResult.config.network.httpProxy,
         noProxy: deps.configResult.config.network.noProxy,
+        proxyMode: deps.configResult.config.network.proxyMode,
+        useProxy: deps.configResult.config.network.useProxy,
         caCertFile: deps.configResult.config.network.caCertFile,
         timeoutMs: deps.configResult.config.network.timeout,
       }),

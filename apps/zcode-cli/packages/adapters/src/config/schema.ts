@@ -26,6 +26,9 @@ const storageSchema = z.object({
 const networkSchema = z.object({
   httpProxy: z.string().min(1).optional(),
   noProxy: z.string().min(1).optional(),
+  // 按需代理（specs/network/http-proxy-mode.md）：onDemand 下默认直连，仅 useProxy 清单命中走代理。
+  proxyMode: z.enum(["always", "onDemand"]).optional(),
+  useProxy: z.string().min(1).optional(),
   caCertFile: z.string().min(1).optional(),
   timeout: positiveNumberSchema.optional(),
 });

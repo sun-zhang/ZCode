@@ -36,11 +36,21 @@ export function createRuntimeAiSdkModelExecutionConfig(
 function normalizeAiSdkNetworkConfig(
   network: AiSdkNetworkConfig | undefined,
 ): AiSdkNetworkConfig | undefined {
-  if (!network?.caCertFile && !network?.httpProxy && !network?.noProxy) return undefined;
+  if (
+    !network?.caCertFile &&
+    !network?.httpProxy &&
+    !network?.noProxy &&
+    !network?.proxyMode &&
+    !network?.useProxy
+  ) {
+    return undefined;
+  }
   return {
     ...(network.caCertFile ? { caCertFile: network.caCertFile } : {}),
     ...(network.httpProxy ? { httpProxy: network.httpProxy } : {}),
     ...(network.noProxy ? { noProxy: network.noProxy } : {}),
+    ...(network.proxyMode ? { proxyMode: network.proxyMode } : {}),
+    ...(network.useProxy ? { useProxy: network.useProxy } : {}),
   };
 }
 

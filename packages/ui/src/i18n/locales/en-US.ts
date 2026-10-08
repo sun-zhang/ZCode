@@ -2188,6 +2188,15 @@ const enUS: Record<string, string> = {
     "Route model, MCP, command-tool, and app renderer egress traffic through this proxy; system environment variables are not read. Leave blank and that traffic connects directly, while the embedded browser follows your system proxy settings. Restart the app to take effect.",
   "settings.httpProxyPlaceholder":
     "Blank means the embedded browser follows the system proxy, e.g. http://127.0.0.1:7890",
+  "settings.httpProxyMode": "Proxy mode",
+  "settings.httpProxyModeDescription":
+    "Always: all requests go through the proxy (exclusions via the no-proxy list). On-demand: connect directly by default and only send the hosts below through the proxy.",
+  "settings.httpProxyMode.always": "Always use proxy",
+  "settings.httpProxyMode.onDemand": "On-demand (default direct)",
+  "settings.httpProxyUseProxyHosts": "Hosts that use the proxy",
+  "settings.httpProxyUseProxyHostsDescription":
+    "Only used in on-demand mode. Requests to these hosts go through the proxy; everything else connects directly. When a request fails you will be asked whether to add its host here.",
+  "settings.httpProxyUseProxyHostsPlaceholder": "e.g. api.example.com,.internal.corp",
   "settings.httpProxyNoProxy": "No proxy",
   "settings.httpProxyNoProxyDescription":
     "Requests matching these hosts connect directly instead of using the HTTP proxy. Separate rules with commas. Restart the app to take effect.",
@@ -2197,6 +2206,14 @@ const enUS: Record<string, string> = {
     "Optional. Set a PEM root certificate path to inject it as NODE_EXTRA_CA_CERTS for models, MCP, and command tools, and to trust it in renderer certificate verification. Restart the app to take effect.",
   "settings.httpProxyCaCertPathPlaceholder": "e.g. /Users/name/certs/root-ca.pem",
   "settings.httpProxySavedHint": "Network proxy settings saved. Restart the app to take effect.",
+  "proxySuggestion.title": "Network request failed",
+  "proxySuggestion.body":
+    "{host} could not be reached directly. Add it to the list of hosts that use the proxy?",
+  "proxySuggestion.add": "Add to proxy list",
+  "proxySuggestion.dismiss": "Dismiss",
+  "proxySuggestion.addedHint":
+    "Added. Restart the app for the change to take effect.",
+  "proxySuggestion.multipleOthers": "+{count} more",
   "settings.desktopChromiumHardwareAcceleration": "Chrome hardware acceleration",
   "settings.desktopChromiumHardwareAccelerationDescription":
     "Turn this off to work around blank windows, crashes, or rendering issues caused by some GPUs or drivers. Restart the app to take effect.",

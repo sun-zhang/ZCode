@@ -28,6 +28,8 @@ export function createMcpTransportFetch(options: {
     env: options.env ?? process.env,
     httpProxy: options.network?.httpProxy,
     noProxy: options.network?.noProxy,
+    proxyMode: options.network?.proxyMode,
+    useProxy: options.network?.useProxy,
   });
 }
 

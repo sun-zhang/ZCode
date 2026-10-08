@@ -44,6 +44,10 @@ import {
   reportPlanUsageTtftToArms,
 } from "@/lib/planUsageArmsTelemetry.js";
 import {
+  isProxyCandidateFailureReason,
+  useProxySuggestionStore,
+} from "@/store/proxySuggestionStore.js";
+import {
   reportSendFunnelInputFocus,
   reportSendFunnelSendClick,
   reportSendFunnelSendResult,
@@ -1521,6 +1525,18 @@ export class ConversationTelemetrySupervisor {
         recordPromptModelRequestStarted(lifecycle.taskKey, legacyEvent, lifecycle.sourceCommandId);
         if (fact.status === "model_request_failed") {
           lifecycle.lastErrorMessage = fact.reason;
+          // 按需代理（specs/network/http-proxy-mode.md）：连接类失败且已知 provider host 时记录
+          // 候选，供 ProxySuggestionBanner 请求用户确认后写入走代理清单。retryable 的中间
+          // attempt 不记录——它们可能重试成功，不构成「请求不通」证据。
+          if (
+            fact.retryable !== true &&
+            fact.providerHostname &&
+            isProxyCandidateFailureReason(fact.reason)
+          ) {
+            useProxySuggestionStore
+              .getState()
+              .recordNetworkFailure(fact.providerHostname, fact.reason ?? "network_error");
+          }
         }
         return;
       }

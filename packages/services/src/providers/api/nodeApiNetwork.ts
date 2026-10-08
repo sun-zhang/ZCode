@@ -1,10 +1,14 @@
 import { readFile } from "node:fs/promises";
 import { rootCertificates } from "node:tls";
 import { Agent, ProxyAgent, fetch as undiciFetch, type Dispatcher } from "undici";
+import type { HttpProxyMode } from "@zcode/shared";
 
 export interface HostApiNetworkOptions {
   httpProxy?: string;
   noProxy?: string;
+  /** 按需代理模式（specs/network/http-proxy-mode.md）：onDemand 下默认直连，仅清单命中走代理。 */
+  proxyMode?: HttpProxyMode;
+  useProxyHosts?: string;
   caCertPath?: string;
 }
 
@@ -71,7 +75,15 @@ export function resolveHostProxyForUrl(
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     return { kind: "direct" };
   }
-  if (matchesNoProxy(url, options.noProxy)) {
+  // 按需代理（specs/network/http-proxy-mode.md）：默认直连，仅 useProxyHosts 清单命中的 host
+  // 走代理。host 匹配复用 noProxy 的规则语义；该模式下 noProxy 清单不参与判定（两清单互斥）。
+  // 套餐/账号等 Host API 请求与 agent 模型请求遵循同一模式，避免「agent 已按清单走代理、
+  // 套餐查询仍直连失败」的出口分叉。
+  if (options.proxyMode === "onDemand") {
+    if (!matchesNoProxy(url, options.useProxyHosts)) {
+      return { kind: "direct" };
+    }
+  } else if (matchesNoProxy(url, options.noProxy)) {
     return { kind: "direct", noProxyMatched: true };
   }
   const configuredProxy = options.httpProxy?.trim();

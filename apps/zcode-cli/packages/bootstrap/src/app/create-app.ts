@@ -384,6 +384,8 @@ export async function createZCodeApp(options: ZCodeAppOptions): Promise<ZCodeApp
             network: {
               httpProxy: configResult.config.network.httpProxy,
               noProxy: configResult.config.network.noProxy,
+              proxyMode: configResult.config.network.proxyMode,
+              useProxy: configResult.config.network.useProxy,
               caCertFile: configResult.config.network.caCertFile,
             },
             workingDirectory,
@@ -396,6 +398,8 @@ export async function createZCodeApp(options: ZCodeAppOptions): Promise<ZCodeApp
         network: {
           httpProxy: configResult.config.network.httpProxy,
           noProxy: configResult.config.network.noProxy,
+          proxyMode: configResult.config.network.proxyMode,
+          useProxy: configResult.config.network.useProxy,
           caCertFile: configResult.config.network.caCertFile,
         },
         outputRootDir: join(storageRoot, "cli", "exec"),
@@ -413,6 +417,8 @@ export async function createZCodeApp(options: ZCodeAppOptions): Promise<ZCodeApp
         timeoutMs: configResult.config.network.timeout,
         proxyUrl: configResult.config.network.httpProxy,
         noProxy: configResult.config.network.noProxy,
+        proxyMode: configResult.config.network.proxyMode,
+        useProxy: configResult.config.network.useProxy,
         caCertFile: configResult.config.network.caCertFile,
       });
     markMcpAdapterInitialized({

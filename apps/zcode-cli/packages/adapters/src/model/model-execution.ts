@@ -19,7 +19,7 @@ import {
   type ModelRequestAuth,
 } from "@zcode/contracts";
 import type { RegistryProviderConfig } from "@zcode/provider";
-import { withOpenRouterAttributionHeaders } from "@zcode/shared";
+import { withOpenRouterAttributionHeaders, type HttpProxyMode } from "@zcode/shared";
 import { createAnthropicCompatFetch } from "./anthropic-stream-compat.js";
 import { createOpenAIResponsesJsonCompatFetch } from "./openai-responses-json-compat.js";
 import { createModelOptionMapFetch, type RawRequestBodyCapture } from "./model-option-map-fetch.js";
@@ -58,6 +58,8 @@ export interface AiSdkNetworkConfig {
   caCertFile?: string;
   httpProxy?: string;
   noProxy?: string;
+  proxyMode?: HttpProxyMode;
+  useProxy?: string;
 }
 
 export interface AiSdkResolvedModel {
@@ -91,6 +93,8 @@ export interface ProviderBusinessErrorFetchOptions {
   fetch?: ProviderFetch;
   httpProxy?: string;
   noProxy?: string;
+  proxyMode?: HttpProxyMode;
+  useProxy?: string;
 }
 
 export interface ProviderBusinessErrorOptions {
@@ -334,6 +338,8 @@ export class AiSdkModelExecution {
       fetch: this.baseTransport,
       httpProxy: this.network.httpProxy,
       noProxy: this.network.noProxy,
+      proxyMode: this.network.proxyMode,
+      useProxy: this.network.useProxy,
     });
     this.providerTransports.set(providerId, transport);
     return transport;
@@ -500,6 +506,8 @@ interface ProviderProxyFetchOptions {
   fetch?: ProviderFetch;
   httpProxy?: string;
   noProxy?: string;
+  proxyMode?: HttpProxyMode;
+  useProxy?: string;
 }
 
 function createProviderProxyFetch(options: ProviderProxyFetchOptions): ProviderFetch {

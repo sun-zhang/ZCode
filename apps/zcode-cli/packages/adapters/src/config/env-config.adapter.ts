@@ -38,6 +38,13 @@ export function parseEnvConfig(
     } else if (configKey === "NO_PROXY") {
       if (!config.network) config.network = {};
       config.network.noProxy = value;
+    } else if (configKey === "PROXY_MODE") {
+      if (!config.network) config.network = {};
+      // 与 shared normalizeHttpProxyMode 同语义：比较用全小写 "ondemand"。
+      config.network.proxyMode = value.trim().toLowerCase() === "ondemand" ? "onDemand" : "always";
+    } else if (configKey === "USE_PROXY") {
+      if (!config.network) config.network = {};
+      config.network.useProxy = value;
     } else if (configKey === "AGENT_CA_CERT") {
       if (!config.network) config.network = {};
       config.network.caCertFile = value;
