@@ -46,10 +46,24 @@ export const targetParts = (target) => {
   };
 };
 
-export const outputBinaryName = (target) => {
+// HZCode 等自有打包形态通过 --product 覆盖产物前缀；默认 zcode 保持下游 release
+// 下载器 zcode-windows-<arch>.exe 命名不变（specs/hzcode-packaging/spec.md）。
+export const defaultProductName = "zcode";
+const productNamePattern = /^[a-z][a-z0-9-]*$/;
+
+export const parseProductValue = (value) => {
+  if (!productNamePattern.test(value)) {
+    throw new Error(
+      `Invalid product name "${value}". Must match ${productNamePattern.source}.`,
+    );
+  }
+  return value;
+};
+
+export const outputBinaryName = (target, product = defaultProductName) => {
   const { arch, outputPlatform, releasePlatform } = targetParts(target);
   const extension = releasePlatform === "win" ? ".exe" : "";
-  return `zcode-${outputPlatform}-${arch}${extension}`;
+  return `${product}-${outputPlatform}-${arch}${extension}`;
 };
 
 export const nodeReleaseArtifact = (target, nodeVersion) => {
@@ -97,6 +111,7 @@ export const parseBuildSeaArgs = (
   let includeAll = false;
   let sawTargetSelector = false;
   let help = false;
+  let product = defaultProductName;
 
   const readValue = (arg, index) => {
     if (arg.includes("=")) {
@@ -187,6 +202,13 @@ export const parseBuildSeaArgs = (
       continue;
     }
 
+    if (arg === "--product" || arg.startsWith("--product=")) {
+      const { nextIndex, value } = readValue(arg, index);
+      product = parseProductValue(value);
+      index = nextIndex;
+      continue;
+    }
+
     throw new Error(`Unknown option "${arg}". Run with --help for usage.`);
   }
 
@@ -210,6 +232,7 @@ export const parseBuildSeaArgs = (
   return {
     help,
     nodeBinaries,
+    product,
     targets,
   };
 };

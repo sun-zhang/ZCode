@@ -12,7 +12,7 @@ export interface CliCopy {
   errors: {
     localeUnsupported(value: string): string;
   };
-  help(version: string): string;
+  help(version: string, commandName?: string): string;
 }
 
 export interface TuiCopy {

@@ -9,6 +9,7 @@ import { resolveDownloadedNodeBinary } from "./sea-node-download.mjs";
 import { stageNodeNotices } from "../../../../../scripts/third-party-notices.mjs";
 import {
   adHocCodesignArgs,
+  defaultProductName,
   hostTarget,
   isHostTarget,
   nodeReleaseArtifact,
@@ -48,6 +49,7 @@ const usage = `Usage:
   node scripts/build-sea.mjs --targets linux-x64,win-x64
   node scripts/build-sea.mjs --all
   node scripts/build-sea.mjs --node-binary linux-x64=/abs/path/node
+  node scripts/build-sea.mjs --product hzcode --target win-x64
 
 Supported targets:
   ${supportedTargets.join(", ")}
@@ -57,9 +59,15 @@ const root = resolve(import.meta.dirname, "../../..");
 const repositoryRoot = resolve(root, "../..");
 const cliRoot = resolve(import.meta.dirname, "..");
 const dist = resolve(cliRoot, "dist");
-const cliBundle = resolve(dist, "zcode.cjs");
-const seaBlobForTarget = (target) => resolve(dist, `zcode-${target}.sea.blob`);
-const seaConfigForTarget = (target) => resolve(dist, `sea-config-${target}.json`);
+const cliBundleForProduct = (product) => resolve(dist, `${product}.cjs`);
+// --product（如 HZCode 打包）只改产物与中间文件前缀；默认 zcode 的文件名保持历史字节不变。
+const seaBlobForTarget = (target, product = defaultProductName) =>
+  resolve(dist, `${product}-${target}.sea.blob`);
+const seaConfigForTarget = (target, product = defaultProductName) =>
+  resolve(
+    dist,
+    `sea-config-${product === defaultProductName ? "" : `${product}-`}${target}.json`,
+  );
 const seaAssetStagingForTarget = (target) => resolve(dist, "sea-assets", target);
 const nodeCache = resolve(dist, "sea-node-cache");
 const sentinelFusePrefix = "NODE_SEA_FUSE_";
@@ -138,9 +146,9 @@ const resolveNodeBinary = async ({ nodeBinaries, nodeVersion, target }) => {
   });
 };
 
-const prepareSeaBlob = async (target, nodeVersion) => {
-  const seaBlob = seaBlobForTarget(target);
-  const seaConfig = seaConfigForTarget(target);
+const prepareSeaBlob = async (target, nodeVersion, product = defaultProductName) => {
+  const seaBlob = seaBlobForTarget(target, product);
+  const seaConfig = seaConfigForTarget(target, product);
   await prepareSeaRuntimeToolAssets({
     root: repositoryRoot,
     target,
@@ -193,8 +201,8 @@ const prepareSeaBlob = async (target, nodeVersion) => {
           "zcode-node-license": nodeLicensePath,
         },
         disableExperimentalSEAWarning: true,
-        main: "dist/zcode.cjs",
-        output: `dist/zcode-${target}.sea.blob`,
+        main: `dist/${product}.cjs`,
+        output: `dist/${product}-${target}.sea.blob`,
         useCodeCache: false,
         useSnapshot: false,
       },
@@ -265,9 +273,9 @@ const smokeTestHostTarget = async (target, binaryPath) => {
   console.log(`[sea] skipping smoke test for foreign target ${target}`);
 };
 
-const buildTarget = async ({ nodeBinaries, nodeVersion, postjectBin, target }) => {
-  const binaryPath = resolve(dist, outputBinaryName(target));
-  const seaBlob = await prepareSeaBlob(target, nodeVersion);
+const buildTarget = async ({ nodeBinaries, nodeVersion, postjectBin, product, target }) => {
+  const binaryPath = resolve(dist, outputBinaryName(target, product));
+  const seaBlob = await prepareSeaBlob(target, nodeVersion, product);
   const targetNodeBinary = await resolveNodeBinary({
     nodeBinaries,
     nodeVersion,
@@ -301,8 +309,11 @@ export const main = async (argv = process.argv.slice(2)) => {
     return;
   }
 
+  const cliBundle = cliBundleForProduct(options.product);
   if (!existsSync(cliBundle)) {
-    throw new Error("Missing dist/zcode.cjs. Run `pnpm build` first.");
+    throw new Error(
+      `Missing dist/${options.product}.cjs. Run \`pnpm build\` with --product ${options.product} first.`,
+    );
   }
   const postjectBin = resolvePostjectBin();
   if (!postjectBin) {
@@ -315,6 +326,7 @@ export const main = async (argv = process.argv.slice(2)) => {
       nodeBinaries: options.nodeBinaries,
       nodeVersion,
       postjectBin,
+      product: options.product,
       target,
     });
   }

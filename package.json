@@ -22,6 +22,7 @@
     "build:zcode": "node scripts/build-zcode.mjs",
     "build:bootstrap": "pnpm -r --filter \"./packages/*\" --filter \"!@zcode/desktop\" build && pnpm --filter @zcode/desktop build:no-runtime-assets",
     "build:sea": "pnpm --dir apps/zcode-cli build:sea",
+    "build:hzcode": "pnpm --dir apps/zcode-cli build:hzcode",
     "build:sea:all": "pnpm install && pnpm --dir apps/zcode-cli build:sea",
     "build:native-search": "node scripts/build-native-search-tools.mjs",
     "pack:native-search": "node scripts/package-native-search-tools.mjs",

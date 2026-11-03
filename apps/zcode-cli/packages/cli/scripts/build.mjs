@@ -123,13 +123,44 @@ export const readRootPackageVersion = async ({ root = projectRoot } = {}) => {
 export const resolveBuildOptions = (args = [], env = process.env) => {
   const desktopAgent = args.includes(desktopAgentBuildFlag);
   const e2eCoverage = env.ZCODE_E2E_COVERAGE === "1";
+  const product = parseProductFlag(args);
 
   return {
     // desktop-agent 正常发布仍需压缩且不携带 map；E2E coverage
     // 专用构建必须保留原始符号和 source map，c8 才能回映到各 package 的 TS 源码。
     minify: desktopAgent && !e2eCoverage,
+    product,
     sourcemap: e2eCoverage || !desktopAgent,
   };
+};
+
+// HZCode 等公司自有打包形态通过 --product 注入产品名（specs/hzcode-packaging/spec.md）。
+// 产物名与进程名跟随产品名，默认 zcode 保持存量链路不变。
+const defaultProductName = "zcode";
+const productNamePattern = /^[a-z][a-z0-9-]*$/;
+
+export const parseProductFlag = (args = []) => {
+  const flagIndex = args.findIndex(
+    (arg) => arg === "--product" || arg.startsWith("--product="),
+  );
+
+  if (flagIndex < 0) return defaultProductName;
+
+  const arg = args[flagIndex];
+  const inlineValue = arg.startsWith("--product=") ? arg.slice("--product=".length) : undefined;
+  const value = inlineValue ?? args[flagIndex + 1];
+
+  if (!value || value.startsWith("--")) {
+    throw new Error("Missing value for --product. Example: --product hzcode");
+  }
+
+  if (!productNamePattern.test(value)) {
+    throw new Error(
+      `Invalid --product value "${value}". Must match ${productNamePattern.source}.`,
+    );
+  }
+
+  return value;
 };
 
 export const resolveBuildAliases = ({
@@ -207,12 +238,13 @@ export const buildCli = async ({
   minify = false,
   sourcemap = true,
   env = process.env,
+  product = defaultProductName,
   version = readRootPackageVersion({
     root: rootDirectory,
   }),
 } = {}) => {
   const cliVersion = await version;
-  const outfile = resolve(cliDirectory, "dist/zcode.cjs");
+  const outfile = resolve(cliDirectory, `dist/${product}.cjs`);
   const sourcemapFile = `${outfile}.map`;
   const notices = await readThirdPartyNotices(resolve(rootDirectory, "../.."));
 
@@ -231,6 +263,7 @@ export const buildCli = async ({
     bundle: true,
     define: {
       __CLI_VERSION__: JSON.stringify(cliVersion),
+      __CLI_PRODUCT_NAME__: JSON.stringify(product),
     },
     entryPoints: [resolve(cliDirectory, "src/main.ts")],
     // Ink 7 and yoga-layout use top-level await, so the CJS CLI bundle loads the TUI

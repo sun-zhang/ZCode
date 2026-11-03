@@ -7,6 +7,7 @@
   "scripts": {
     "build": "turbo run build",
     "build:sea": "pnpm --filter @zcode/cli build:sea",
+    "build:hzcode": "pnpm --filter @zcode/cli build:hzcode",
     "check": "pnpm registry:check && turbo run typecheck",
     "clean": "turbo run clean",
     "cli:build": "pnpm --filter @zcode/cli build",
